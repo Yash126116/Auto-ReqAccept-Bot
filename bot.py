@@ -2,37 +2,38 @@ from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait,
 from pyrogram import Client, filters
 from pyrogram.types import *
 from motor.motor_asyncio import AsyncIOMotorClient  
-import os
+from os import environ as env
 import asyncio, datetime, time
 
-ACCEPTED_TEXT = "Hey {user}\n\nYour Request For {chat} Is Accepted ✅"
-START_TEXT = "Hai {}\n\nI am Auto Request Accept Bot Working For All Channels. Add Me In Your Channel and Forward a Message From That Channel"
-SUCCESS_MESSAGE = "Success! The bot has the required permissions."
-FAILED_MESSAGE = "Failed to add. The bot does not have 'invite_users' permission. Please add the required permission using the button below."
 
-API_ID = int(os.getenv('API_ID'))
-API_HASH = os.getenv('API_HASH')
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-DB_URL = os.getenv('DB_URL')
-ADMINS = list(map(int, os.getenv('ADMINS').split())) if os.getenv('ADMINS') else []
+ACCEPTED_TEXT = "Hey {user}\n\nYour Request For {chat} Is Accepted ✅"
+START_TEXT = "Hai {}\n\nI am Auto Request Accept Bot With Working For All Channel. Add Me In Your Channel To Use"
+
+API_ID = int(env.get('API_ID'))
+API_HASH = env.get('API_HASH')
+BOT_TOKEN = env.get('BOT_TOKEN')
+DB_URL = env.get('DB_URL')
+ADMINS = int(env.get('ADMINS'))
 
 Dbclient = AsyncIOMotorClient(DB_URL)
 Cluster = Dbclient['Cluster0']
 Data = Cluster['users']
 Bot = Client(name='AutoAcceptBot', api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-@Bot.on_message(filters.command("start") & filters.private)
+
+
+@Bot.on_message(filters.command("start") & filters.private)                    
 async def start_handler(c, m):
     user_id = m.from_user.id
-    if not await Data.find_one({'id': user_id}):
-        await Data.insert_one({'id': user_id})
-    button = [[
+    if not await Data.find_one({'id': user_id}): await Data.insert_one({'id': user_id})
+    button = [[        
         InlineKeyboardButton('Updates', url='https://t.me/mkn_bots_updates'),
-        InlineKeyboardButton('Add Me', url='https://t.me/Request_Admin_Approvalbot?startchannel=log&admin=post_messages+edit_messages+delete_messages+invite_users+add_admins+change_info')
+        InlineKeyboardButton('Support', url='https://t.me/MKN_BOTZ_DISCUSSION_GROUP')
     ]]
     return await m.reply_text(text=START_TEXT.format(m.from_user.mention), disable_web_page_preview=True, reply_markup=InlineKeyboardMarkup(button))
 
-@Bot.on_message(filters.command(["broadcast", "users"]) & filters.user(ADMINS))
+
+@Bot.on_message(filters.command(["broadcast", "users"]) & filters.user(ADMINS))  
 async def broadcast(c, m):
     if m.text == "/users":
         total_users = await Data.count_documents({})
@@ -66,34 +67,22 @@ async def broadcast(c, m):
             failed += 1
         done += 1
         if not done % 20:
-            await sts.edit(f"Broadcast in progress:\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nFailed: {failed}")
+            await sts.edit(f"Broadcast in progress:\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nFailed: {failed}")    
     time_taken = datetime.timedelta(seconds=int(time.time()-start_time))
     await sts.delete()
-    await m.reply_text(f"Broadcast Completed:\nCompleted in {time_taken} seconds.\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nFailed: {failed}", quote=True)
+    await message.reply_text(f"Broadcast Completed:\nCompleted in {time_taken} seconds.\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nFailed: {failed}", quote=True)
 
-@Bot.on_message(filters.forwarded & filters.private)
-async def forwarded_handler(c, m):
-    if m.forward_from_chat:
-        chat_id = m.forward_from_chat.id
-        chat_member = await c.get_chat_member(chat_id, 'me')
-        if chat_member.can_invite_users:
-            await m.reply_text(SUCCESS_MESSAGE)
-        else:
-            button = [[
-                InlineKeyboardButton('Add Me', url='https://t.me/Request_Admin_Approvalbot?startchannel=log&admin=invite_users')
-            ]]
-            await m.reply_text(FAILED_MESSAGE, reply_markup=InlineKeyboardMarkup(button))
+
 
 @Bot.on_chat_join_request()
 async def req_accept(c, m):
     user_id = m.from_user.id
     chat_id = m.chat.id
-    if not await Data.find_one({'id': user_id}):
-        await Data.insert_one({'id': user_id})
+    if not await Data.find_one({'id': user_id}): await Data.insert_one({'id': user_id})
     await c.approve_chat_join_request(chat_id, user_id)
-    try:
-        await c.send_message(user_id, ACCEPTED_TEXT.format(user=m.from_user.mention, chat=m.chat.title))
-    except Exception as e:
-        print(e)
+    try: await c.send_message(user_id, ACCEPTED_TEXT.format(user=m.from_user.mention, chat=m.chat.title))
+    except Exception as e: print(e)
+
+
 
 Bot.run()

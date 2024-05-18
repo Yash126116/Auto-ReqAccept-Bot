@@ -1,4 +1,4 @@
-from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
+from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid, BadRequest
 from pyrogram import Client, filters
 from pyrogram.types import *
 from motor.motor_asyncio import AsyncIOMotorClient  
@@ -104,4 +104,19 @@ async def req_accept(c, m):
     except Exception as e:
         print(e)
 
-Bot.run()
+# Attempt to synchronize time manually
+async def main():
+    while True:
+        try:
+            await Bot.start()
+            print("Bot started successfully.")
+            break
+        except BadRequest as e:
+            if str(e) == "[16] The msg_id is too low, the client time has to be synchronized.":
+                print("Synchronizing time...")
+                time.sleep(5)
+            else:
+                raise
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())

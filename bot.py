@@ -2,7 +2,7 @@ from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait,
 from pyrogram import Client, filters
 from pyrogram.types import *
 from motor.motor_asyncio import AsyncIOMotorClient  
-from os import environ as env
+from os import environ
 import asyncio, datetime, time
 
 ACCEPTED_TEXT = "Hey {user}\n\nYour Request For {chat} Is Accepted ✅"
@@ -10,11 +10,11 @@ START_TEXT = "Hai {}\n\nI am Auto Request Accept Bot Working For All Channels. A
 SUCCESS_MESSAGE = "Success! The bot has the required permissions."
 FAILED_MESSAGE = "Failed to add. The bot does not have 'invite_users' permission. Please add the required permission using the button below."
 
-API_ID = int(env.get('API_ID'))
-API_HASH = env.get('API_HASH')
-BOT_TOKEN = env.get('BOT_TOKEN')
-DB_URL = env.get('DB_URL')
-ADMINS = list(map(int, env.get('ADMINS').split()))
+API_ID = int(environ.get('API_ID'))
+API_HASH = environ.get('API_HASH')
+BOT_TOKEN = environ.get('BOT_TOKEN')
+DB_URL = environ.get('DB_URL')
+ADMINS = list(map(int, environ.get('ADMINS').split())) if environ.get('ADMINS') else []
 
 Dbclient = AsyncIOMotorClient(DB_URL)
 Cluster = Dbclient['Cluster0']
